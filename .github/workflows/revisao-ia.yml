@@ -24,12 +24,12 @@ jobs:
         run: |
           if [ -n "$ANTHROPIC_API_KEY" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "Sem ANTHROPIC_API_KEY: revisão por IA pulada."; fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.chave.outputs.ok == 'true'
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.chave.outputs.ok == 'true'
         with:
           node-version: 20
