@@ -1,7 +1,11 @@
 // Testes das regras de reserva. Cada teste cita o critério de aceite (CA) da SPEC que ele prova.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { criarReserva } from '../src/reservas.js';
+import {
+  conflitoDeHorario,
+  criarReserva,
+  temConflitoDeHorario,
+} from '../src/reservas.js';
 
 const AGORA = new Date('2026-12-01T08:00:00-03:00');
 const pedido = (extra = {}) => ({
@@ -51,4 +55,98 @@ test('CA-3: início no passado devolve 400', () => {
   assert.equal(noAgora.status, 201);
 });
 
-// Lab 3: escreva aqui os testes do CA-2 ANTES de mexer em src/reservas.js.
+test('CA-2: conflito na mesma sala devolve 409; horários encostados e outra sala não conflitam', () => {
+  const existentes = [
+    criarReserva(
+      [],
+      pedido(),
+      AGORA,
+    ).reserva,
+  ];
+
+  const sobreposto = criarReserva(
+    existentes,
+    pedido({
+      inicio: '2026-12-01T15:00:00-03:00',
+      fim: '2026-12-01T17:00:00-03:00',
+      responsavel: 'prof.beatriz',
+    }),
+    AGORA,
+  );
+  assert.equal(sobreposto.status, 409);
+  assert.match(sobreposto.erro, /conflito/i);
+
+  const encostado = criarReserva(
+    existentes,
+    pedido({
+      inicio: '2026-12-01T16:00:00-03:00',
+      fim: '2026-12-01T18:00:00-03:00',
+      responsavel: 'prof.beatriz',
+    }),
+    AGORA,
+  );
+  assert.equal(encostado.status, 201);
+
+  const outraSala = criarReserva(
+    existentes,
+    pedido({
+      sala: 'lab-2',
+      responsavel: 'prof.beatriz',
+    }),
+    AGORA,
+  );
+  assert.equal(outraSala.status, 201);
+});
+
+test('conflitoDeHorario: sem conflitos devolve lista vazia', () => {
+  const existentes = [pedido()];
+  const conflitantes = conflitoDeHorario(pedido({
+    inicio: '2026-12-01T16:00:00-03:00',
+    fim: '2026-12-01T18:00:00-03:00',
+  }), existentes);
+
+  assert.deepEqual(conflitantes, []);
+});
+
+test('conflitoDeHorario: lista no máximo cinco conflitos por padrão', () => {
+  const existentes = Array.from({ length: 7 }, (_, indice) => ({
+    sala: 'lab-1',
+    inicio: `2026-12-01T${String(14 + indice).padStart(2, '0')}:00:00-03:00`,
+    fim: `2026-12-01T${String(15 + indice).padStart(2, '0')}:00:00-03:00`,
+  }));
+
+  const conflitantes = conflitoDeHorario(pedido({
+    inicio: '2026-12-01T14:00:00-03:00',
+    fim: '2026-12-01T22:00:00-03:00',
+  }), existentes);
+
+  assert.equal(conflitantes.length, 5);
+});
+
+test('conflitoDeHorario: aceita máximo parametrizável', () => {
+  const existentes = [
+    pedido(),
+    pedido({
+      inicio: '2026-12-01T14:30:00-03:00',
+      fim: '2026-12-01T15:30:00-03:00',
+    }),
+  ];
+
+  assert.equal(conflitoDeHorario(pedido({
+    inicio: '2026-12-01T14:15:00-03:00',
+    fim: '2026-12-01T15:45:00-03:00',
+  }), existentes, 1).length, 1);
+});
+
+test('temConflitoDeHorario: devolve booleano', () => {
+  const existentes = [pedido()];
+
+  assert.equal(temConflitoDeHorario(pedido({
+    inicio: '2026-12-01T15:00:00-03:00',
+    fim: '2026-12-01T17:00:00-03:00',
+  }), existentes), true);
+  assert.equal(temConflitoDeHorario(pedido({
+    inicio: '2026-12-01T16:00:00-03:00',
+    fim: '2026-12-01T18:00:00-03:00',
+  }), existentes), false);
+});

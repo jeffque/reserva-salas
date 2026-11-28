@@ -5,6 +5,25 @@ import { salaExiste } from './salas.js';
 
 const CAMPOS_OBRIGATORIOS = ['sala', 'inicio', 'fim', 'responsavel'];
 
+export function conflitoDeHorario(pedido, reservas, maximo = 5) {
+  const limite = Number.isInteger(maximo) && maximo >= 0 ? maximo : 5;
+  const inicio = new Date(pedido.inicio);
+  const fim = new Date(pedido.fim);
+
+  return reservas
+    .filter((reserva) => reserva.sala === pedido.sala)
+    .filter((reserva) => {
+      const reservaInicio = new Date(reserva.inicio);
+      const reservaFim = new Date(reserva.fim);
+      return inicio < reservaFim && fim > reservaInicio;
+    })
+    .slice(0, limite);
+}
+
+export function temConflitoDeHorario(pedido, reservas) {
+  return conflitoDeHorario(pedido, reservas, 1).length > 0;
+}
+
 /**
  * Tenta criar uma reserva.
  * @param {Array} reservas  reservas que já existem
@@ -25,7 +44,9 @@ export function criarReserva(reservas, pedido, agora = new Date()) {
   if (fim <= inicio) return { status: 400, erro: 'O fim precisa ser depois do início' };
   if (inicio < agora) return { status: 400, erro: 'O início da reserva não pode estar no passado' };
 
-  // TODO CA-2 (SPEC-001): conflito de horário na mesma sala é recusado com 409. (Lab 3, teste antes!)
+  if (temConflitoDeHorario(pedido, reservas)) {
+    return { status: 409, erro: 'Conflito de horário na sala' };
+  }
 
   const reserva = {
     id: reservas.length + 1,
