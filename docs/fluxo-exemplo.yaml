@@ -2,6 +2,14 @@
 # Inspirado no ciclo agêntico (ADLC) da Factory 2.0: cada etapa tem quem faz, o que entrega e o portão de saída.
 fluxo: mini-fabrica
 versao: 1.0.0
+preflight:
+  quem: agente coordenador do fluxo
+  quando: antes de iniciar a etapa intencao
+  skill: /consultar-licoes-diario
+  executor: subagente Explore via context fork
+  entrada: pedido inicial da pessoa e agente/etapa que recebera o trabalho
+  entrega: trecho curto com as licoes relevantes e como aplica-las
+  portao: encaminhar o retorno ao agente destinatario antes de iniciar o fluxo
 etapas:
   - id: intencao
     quem: pessoa
