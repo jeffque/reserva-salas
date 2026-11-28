@@ -37,7 +37,7 @@ Invoke-RestMethod -Method Post -Uri http://localhost:3000/reservas -ContentType 
 | `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` | Apontam cada ferramenta para o `AGENTS.md` | 1 e 2 |
 | `docs/specs/SPEC-001-reservar-sala.md` | A SPEC com os critérios dos labs | 1 a 3 |
 | `docs/specs/_modelo-spec.md` | Modelo para as próximas SPECs | 2 |
-| `.claude/skills/escrever-teste/` e `.claude/commands/revisar-spec.md` | Skill e comando de exemplo | 2 |
+| `.claude/skills/` e `.claude/commands/revisar-spec.md` | Skills `escrever-teste` e `consultar-licoes-diario`; comando de exemplo | 2 e 4 |
 | `.claude/settings.json` e `scripts/bloqueia-segredo.js` | Hook do Claude Code que bloqueia segredo | 3 |
 | `.githooks/pre-commit` | O mesmo bloqueio, para qualquer ferramenta | 3 |
 | `.github/workflows/ci.yml` e `revisao-ia.yml` | CI e revisão automática do PR | 3 |

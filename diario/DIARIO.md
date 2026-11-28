@@ -94,6 +94,7 @@ Quem não registra o erro, repete o erro.
 **O que faríamos diferente:**
 - Incluir o teste HTTP do 409 no mesmo fluxo de entrega da regra de domínio, em vez de abrir um PR separado depois.
 - Fazer a verificação de falha do teste de rota como parte da revisão do critério, para comprovar que ele detecta a ausência da regra.
+- Evitar outra linguagem para uma validação simples: o agente recorreu a `ruby -e 'require "yaml"; YAML.load_file(...)'` para validar `docs/fluxo-exemplo.yaml`, embora o projeto use Node. Preferir executar código Node diretamente (`node`/`npm test`) reduz a estrutura necessária, a entropia e o contexto.
 
 ---
 
