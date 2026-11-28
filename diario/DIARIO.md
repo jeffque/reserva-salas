@@ -5,11 +5,15 @@ Quem não registra o erro, repete o erro.
 
 - **Grupo:** <nomes>
 - **Tema do projeto:** reserva-salas
-- **Ferramenta(s):** Claude Code (extensão do VS Code), com subagentes e o comando `/revisar-spec`
+- **Ferramenta(s):**
+  - Claude Code (extensão no VS Code)
+  - GitHub Copilot no VS Code de um GitHub Codespace
 
 ---
 
 ## Entrada 1 · Aula 1 (roteiro conferido) e Lab 2 (SPEC-002) · <data>
+
+**Ferramenta usada:** Claude Code (extensão no VS Code)
 
 **O que pedimos ao agente (os 3 prompts mais importantes, copiados):**
 1. `quero que me ajude a construir uma boa spec de cancelamento de reserva, me oriente com posso fazer passo a passo`
@@ -59,6 +63,36 @@ Quem não registra o erro, repete o erro.
 - Rodar o `/revisar-spec` numa conversa nova: quem ajudou a escrever a SPEC tende a concordar com ela.
 - No Passo 0, testar de verdade que o hook bloqueia (um commit com teste vermelho), em vez de só rodar `npm run hooks:git`.
 - Pedir ao agente uma pergunta por vez desde o começo.
+
+---
+
+## Entrada 2 · Lab 3 · CA-02: conflito de horário · 28/11/2026
+
+**Ferramenta usada:** GitHub Copilot no VS Code de um GitHub Codespace
+
+**O que pedimos ao agente (os 3 prompts mais importantes, copiados):**
+1. `Leia as questões de programação agêntica e .claude/. Estou trabalhando no CA-02 sobre conflito de horário. A última sessão agêntica terminou de modo inesperado, leia o que não está elencado em src/reservas.js e test/reservas.test.js`
+2. `Quero que faça um teste para esse caso, em test/app.test.js`
+3. `Temporariamente altera o src/reservas.js para não detectar mais conflitos. Então, rode o teste de rota novamente para validar. O restultado esperado é que o teste aponte falha.`
+
+**3 acertos do agente:**
+- Recuperou o estado do CA-02 pela SPEC-001 e pelo histórico da sessão anterior. A regra de domínio foi implementada e revisada no PR #6, que foi integrado.
+- Acrescentou em `test/app.test.js` um teste HTTP para sobreposição na mesma sala, incluindo a resposta 409 e a mensagem; também verificou horário encostado e outra sala. O PR #7 foi integrado.
+- Fez a verificação negativa pedida: ao remover temporariamente a checagem de conflito, o teste HTTP falhou com `201 !== 409`. Restaurou a implementação e o teste passou. A suíte completa terminou com 17 testes passando.
+
+**Erros do agente (pelo menos 1, com evidência):**
+- Afirmou inicialmente que `.claude/settings.json` não seria lido pelo Copilot no VS Code. Depois de o usuário questionar, consultou a documentação oficial e corrigiu a informação; o usuário desfez a alteração inicial de configuração. → Antes de recomendar uma configuração paralela, verificar as fontes e o formato de hooks suportados pelo harness ativo.
+
+**O que nós decidimos (e o agente não podia decidir):**
+- Seguir o CA-02 da SPEC-001: sobreposição na mesma sala retorna 409; horários encostados e outra sala não conflitam.
+- Acrescentar um teste de ponta a ponta da rota, além dos testes de regra de negócio, sem alterar a implementação HTTP.
+- Manter `package-lock.json` fora dos commits do Lab 3.
+
+**Custo e tempo:** 11.69 AI credits · 1h 3m 39s
+
+**O que faríamos diferente:**
+- Incluir o teste HTTP do 409 no mesmo fluxo de entrega da regra de domínio, em vez de abrir um PR separado depois.
+- Fazer a verificação de falha do teste de rota como parte da revisão do critério, para comprovar que ele detecta a ausência da regra.
 
 ---
 
