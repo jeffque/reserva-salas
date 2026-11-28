@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  cancelarReserva,
   conflitoDeHorario,
   criarReserva,
   temConflitoDeHorario,
@@ -21,6 +22,38 @@ test('CA-1: sala livre é reservada', () => {
   assert.equal(r.status, 201);
   assert.equal(r.reserva.sala, 'lab-1');
   assert.equal(r.reserva.responsavel, 'prof.ana');
+});
+
+test('CA-1: reserva nova nasce ativa', () => {
+  const r = criarReserva([], pedido(), AGORA);
+  assert.equal(r.status, 201);
+  assert.equal(r.reserva.status, 'ativa');
+  assert.equal(r.reserva.justificativa, null);
+});
+
+test('CA-2: cancelar conforme horário e justificativa', () => {
+  const reservaAtiva = () => criarReserva([], pedido(), AGORA).reserva;
+  const casos = [
+    ['2026-12-01T13:59:00-03:00', undefined, 204, null, null],
+    ['2026-12-01T13:59:00-03:00', '  Aula cancelada  ', 204, 'Aula cancelada', null],
+    ['2026-12-01T13:59:00-03:00', '   ', 204, null, null],
+    ['2026-12-01T14:00:00-03:00', undefined, 400, null, /justificativa/i],
+    ['2026-12-01T14:00:00-03:00', '   ', 400, null, /justificativa/i],
+    ['2026-12-01T14:00:00-03:00', 'Aula cancelada', 204, 'Aula cancelada', null],
+    ['2026-12-01T15:59:00-03:00', undefined, 400, null, /justificativa/i],
+    ['2026-12-01T15:59:00-03:00', 'Aula cancelada', 204, 'Aula cancelada', null],
+    ['2026-12-01T16:00:00-03:00', 'Aula cancelada', 409, null, /terminou/i],
+    ['2026-12-01T16:00:00-03:00', undefined, 409, null, /terminou/i],
+  ];
+
+  for (const [momento, justificativa, status, justificativaEsperada, erroEsperado] of casos) {
+    const reserva = reservaAtiva();
+    const resultado = cancelarReserva([reserva], reserva.id, justificativa, new Date(momento));
+    assert.equal(resultado.status, status);
+    if (erroEsperado) assert.match(resultado.erro, erroEsperado);
+    assert.equal(reserva.status, status === 204 ? 'cancelada' : 'ativa');
+    assert.equal(reserva.justificativa, justificativaEsperada);
+  }
 });
 
 test('campo obrigatório ausente devolve 400 dizendo qual falta', () => {
