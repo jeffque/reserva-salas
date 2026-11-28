@@ -12,6 +12,7 @@ export function conflitoDeHorario(pedido, reservas, maximo = 5) {
 
   return reservas
     .filter((reserva) => reserva.sala === pedido.sala)
+    .filter((reserva) => reserva.status !== 'cancelada')
     .filter((reserva) => {
       const reservaInicio = new Date(reserva.inicio);
       const reservaFim = new Date(reserva.fim);
@@ -22,6 +23,35 @@ export function conflitoDeHorario(pedido, reservas, maximo = 5) {
 
 export function temConflitoDeHorario(pedido, reservas) {
   return conflitoDeHorario(pedido, reservas, 1).length > 0;
+}
+
+export function cancelarReserva(reservas, id, justificativa, agora = new Date()) {
+  if (typeof justificativa !== 'undefined' && justificativa !== null && typeof justificativa !== 'string') {
+    return { status: 400, erro: 'Justificativa precisa ser texto' };
+  }
+
+  const reserva = reservas.find((item) => item.id === id);
+  if (!reserva) return { status: 404, erro: 'Reserva não encontrada' };
+  if (reserva.status === 'cancelada') {
+    return { status: 409, erro: 'Reserva já está cancelada' };
+  }
+  if (agora >= new Date(reserva.fim)) {
+    return { status: 409, erro: 'Reserva já terminou; não é possível cancelar' };
+  }
+
+  let texto = null;
+  if (typeof justificativa === 'string') {
+    const limpa = justificativa.trim();
+    if (limpa) texto = limpa;
+  }
+
+  if (agora >= new Date(reserva.inicio) && texto === null) {
+    return { status: 400, erro: 'Justificativa é obrigatória depois do início da reserva' };
+  }
+
+  reserva.status = 'cancelada';
+  reserva.justificativa = texto;
+  return { status: 204, reserva };
 }
 
 /**
@@ -54,6 +84,8 @@ export function criarReserva(reservas, pedido, agora = new Date()) {
     inicio: inicio.toISOString(),
     fim: fim.toISOString(),
     responsavel: pedido.responsavel,
+    status: 'ativa',
+    justificativa: null,
   };
   return { status: 201, reserva };
 }

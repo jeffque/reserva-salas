@@ -1,7 +1,7 @@
 // Camada HTTP: só traduz requisição em chamada de função e resultado em resposta.
 // A regra de negócio mora em reservas.js.
 import { SALAS } from './salas.js';
-import { criarReserva } from './reservas.js';
+import { cancelarReserva, criarReserva } from './reservas.js';
 
 export function criarApp({ agora = () => new Date() } = {}) {
   const reservas = [];
@@ -17,6 +17,17 @@ export function criarApp({ agora = () => new Date() } = {}) {
         if (resultado.reserva) reservas.push(resultado.reserva);
         return responder(res, resultado.status, resultado.reserva ?? { erro: resultado.erro });
       }
+      const cancelamento = url.pathname.match(/^\/reservas\/([^/]+)\/cancelamento$/);
+      if (req.method === 'POST' && cancelamento) {
+        const pedido = await lerJson(req);
+        if (pedido === null || Array.isArray(pedido) || typeof pedido !== 'object') {
+          return responder(res, 400, { erro: 'Corpo malformado: envie um objeto JSON' });
+        }
+        const idTexto = cancelamento[1];
+        const id = /^\d+$/.test(idTexto) ? Number(idTexto) : NaN;
+        const resultado = cancelarReserva(reservas, id, pedido.justificativa, agora());
+        return responder(res, resultado.status, resultado.reserva ? undefined : { erro: resultado.erro });
+      }
       return responder(res, 404, { erro: 'Rota não encontrada' });
     } catch (e) {
       return responder(res, 400, { erro: 'JSON inválido no corpo da requisição' });
@@ -26,7 +37,7 @@ export function criarApp({ agora = () => new Date() } = {}) {
 
 function responder(res, status, corpo) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify(corpo));
+  res.end(status === 204 ? undefined : JSON.stringify(corpo));
 }
 
 async function lerJson(req) {
