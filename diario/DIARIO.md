@@ -82,6 +82,7 @@ Quem não registra o erro, repete o erro.
 
 **Erros do agente (pelo menos 1, com evidência):**
 - Afirmou inicialmente que `.claude/settings.json` não seria lido pelo Copilot no VS Code. Depois de o usuário questionar, consultou a documentação oficial e corrigiu a informação; o usuário desfez a alteração inicial de configuração. → Antes de recomendar uma configuração paralela, verificar as fontes e o formato de hooks suportados pelo harness ativo.
+- Publicou a descrição do PR #8 com `\n` literal, em vez de quebras de linha reais. O corpo foi passado com escapes no argumento de `gh pr create`; depois foi corrigido usando `--body-file -` com texto multiline. → Conferir o corpo publicado no PR e preferir a entrada multiline para descrições formatadas.
 
 **O que nós decidimos (e o agente não podia decidir):**
 - Seguir o CA-02 da SPEC-001: sobreposição na mesma sala retorna 409; horários encostados e outra sala não conflitam.
